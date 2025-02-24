@@ -213,6 +213,54 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/DatabaseQuery"
+              },
+              "examples": {
+                "queryByStatus": {
+                  "summary": "Query by Status Only",
+                  "value": {
+                    "filter": {
+                      "property": "Status",
+                      "status": {
+                        "equals": "{status_value}"
+                      }
+                    },
+                    "page_size": 20
+                  }
+                },
+                "queryByPriority": {
+                  "summary": "Query by Priority Only",
+                  "value": {
+                    "filter": {
+                      "property": "Priority",
+                      "select": {
+                        "equals": "{priority_value}"
+                      }
+                    },
+                    "page_size": 20
+                  }
+                },
+                "queryByStatusAndPriority": {
+                  "summary": "Query by Status and Priority",
+                  "value": {
+                    "filter": {
+                      "and": [
+                        {
+                          "property": "Status",
+                          "status": {
+                            "equals": "{status_value}"
+                          }
+                        },
+                        {
+                          "property": "Priority",
+                          "select": {
+                            "equals": "{priority_value}"
+                          }
+                        }
+                      ]
+                    },
+                    "page_size": 20
+                  }
+                }
               }
             }
           }
@@ -224,6 +272,51 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DatabaseRecord"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/databases/{database_id}/properties/search": {
+      "get": {
+        "operationId": "searchDatabaseProperties",
+        "summary": "Search properties within a database.",
+        "parameters": [
+          {
+            "name": "database_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the database whose properties to search.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "The property name (or partial name) to search for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A JSON object containing matched properties.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "matched_properties": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
                 }
               }
             }
@@ -428,7 +521,7 @@
   },
   "components": {
     "headers": {
-      "NotionVersion": {
+      "Notion-Version": {
         "required": true,
         "schema": {
           "type": "string",
@@ -440,11 +533,17 @@
     "schemas": {
       "Page": {
         "type": "object",
-        "required": ["object", "id", "properties"],
+        "required": [
+          "object",
+          "id",
+          "properties"
+        ],
         "properties": {
           "object": {
             "type": "string",
-            "enum": ["page"]
+            "enum": [
+              "page"
+            ]
           },
           "id": {
             "type": "string",
@@ -467,11 +566,16 @@
       },
       "PageCreate": {
         "type": "object",
-        "required": ["parent", "properties"],
+        "required": [
+          "parent",
+          "properties"
+        ],
         "properties": {
           "parent": {
             "type": "object",
-            "required": ["database_id"],
+            "required": [
+              "database_id"
+            ],
             "properties": {
               "database_id": {
                 "type": "string",
@@ -534,11 +638,16 @@
       },
       "Database": {
         "type": "object",
-        "required": ["object", "id"],
+        "required": [
+          "object",
+          "id"
+        ],
         "properties": {
           "object": {
             "type": "string",
-            "enum": ["database"]
+            "enum": [
+              "database"
+            ]
           },
           "id": {
             "type": "string",
@@ -552,11 +661,16 @@
       },
       "User": {
         "type": "object",
-        "required": ["object", "id"],
+        "required": [
+          "object",
+          "id"
+        ],
         "properties": {
           "object": {
             "type": "string",
-            "enum": ["user"]
+            "enum": [
+              "user"
+            ]
           },
           "id": {
             "type": "string",
@@ -579,11 +693,16 @@
       },
       "Block": {
         "type": "object",
-        "required": ["object", "id"],
+        "required": [
+          "object",
+          "id"
+        ],
         "properties": {
           "object": {
             "type": "string",
-            "enum": ["block"]
+            "enum": [
+              "block"
+            ]
           },
           "id": {
             "type": "string",
@@ -600,11 +719,16 @@
       },
       "Comment": {
         "type": "object",
-        "required": ["object", "id"],
+        "required": [
+          "object",
+          "id"
+        ],
         "properties": {
           "object": {
             "type": "string",
-            "enum": ["comment"]
+            "enum": [
+              "comment"
+            ]
           },
           "id": {
             "type": "string",
@@ -621,11 +745,16 @@
       },
       "PagePropertyItem": {
         "type": "object",
-        "required": ["object", "id"],
+        "required": [
+          "object",
+          "id"
+        ],
         "properties": {
           "object": {
             "type": "string",
-            "enum": ["property_item"]
+            "enum": [
+              "property_item"
+            ]
           },
           "id": {
             "type": "string",
@@ -642,7 +771,8 @@
         "properties": {
           "filter": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": true,
+            "description": "Filter conditions for querying the database. Example for Projects DB: { \"and\": [ { \"property\": \"Status\", \"status\": { \"equals\": \"In Progress\" } }, { \"property\": \"Priority\", \"select\": { \"equals\": \"High\" } } ] }. Allowed Status values (Projects): [\"Not Started\", \"In Progress\", \"Complete\", \"On Hold\", \"Archived\"]. Allowed Priority values (Projects): [\"High\", \"Medium\", \"Low\"]. For Tasks DB, use \"Task Status\" (Allowed: [\"Not Started\", \"In Progress\", \"Complete\"]) and \"Priority\" (Allowed: [\"1: High\", \"2: Medium\", \"3: Low\"])."
           },
           "sorts": {
             "type": "array",
@@ -650,16 +780,29 @@
               "type": "object",
               "additionalProperties": true
             }
+          },
+          "page_size": {
+            "type": "integer",
+            "default": 20,
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Number of results to return per query. Defaults to 20 to ensure at least 10-20 results are returned."
           }
-        }
+        },
+        "description": "Schema for querying a Notion database. Use filters, sorts, and page_size to narrow down results."
       },
       "DatabaseRecord": {
         "type": "object",
-        "required": ["object", "id"],
+        "required": [
+          "object",
+          "id"
+        ],
         "properties": {
           "object": {
             "type": "string",
-            "enum": ["database_record"]
+            "enum": [
+              "database_record"
+            ]
           },
           "id": {
             "type": "string",
@@ -691,11 +834,16 @@
       },
       "SearchResult": {
         "type": "object",
-        "required": ["object", "id"],
+        "required": [
+          "object",
+          "id"
+        ],
         "properties": {
           "object": {
             "type": "string",
-            "enum": ["search_result"]
+            "enum": [
+              "search_result"
+            ]
           },
           "id": {
             "type": "string",
@@ -706,6 +854,44 @@
             "additionalProperties": true
           }
         }
+      },
+      "ProjectStatus": {
+        "type": "string",
+        "enum": [
+          "Not Started",
+          "In Progress",
+          "Complete",
+          "On Hold",
+          "Archived"
+        ],
+        "description": "Allowed status values for Projects DB."
+      },
+      "ProjectPriority": {
+        "type": "string",
+        "enum": [
+          "High",
+          "Medium",
+          "Low"
+        ],
+        "description": "Allowed priority values for Projects DB."
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": [
+          "Not Started",
+          "In Progress",
+          "Complete"
+        ],
+        "description": "Allowed status values for Tasks DB."
+      },
+      "TaskPriority": {
+        "type": "string",
+        "enum": [
+          "1: High",
+          "2: Medium",
+          "3: Low"
+        ],
+        "description": "Allowed priority values for Tasks DB."
       }
     },
     "securitySchemes": {
